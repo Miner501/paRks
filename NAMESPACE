@@ -2,3 +2,4 @@
 
 export(geocode_address)
 export(geocode_coords)
+export(travel_zone)
