@@ -2,4 +2,7 @@
 
 export(geocode_address)
 export(geocode_coords)
+export(get_bluespaces)
+export(get_greenspaces)
+export(get_roads)
 export(travel_zone)
