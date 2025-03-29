@@ -14,7 +14,11 @@ geocode_address <- function(address) {
   }
 
   input_df <- data.frame(address = address)
-  tidygeocoder::geocode(.tbl = input_df, address = address, method = "osm", verbose = FALSE)
+  coords <- tidygeocoder::geocode(.tbl = input_df, address = address, method = "osm", verbose = FALSE)
+
+  # "tidygeocoder" uses "long". Converted to "lon" instead, as that is used in "travel_zone.R".
+  coords <- dplyr::rename(coords, lon = long)
+  return(coords)
 }
 
 
