@@ -4,10 +4,25 @@
 #' @param x An sf object
 #' @return A cleaned sf object
 clean_geometry <- function(x) {
+  if (nrow(x) == 0 || is.null(x)) return(x)
+
+  # Project temporarily to planar
   x <- sf::st_transform(x, 3857)
-  x <- sf::st_make_valid(x)
-  x <- sf::st_set_precision(x, 1e6)
-  x <- sf::st_buffer(x, dist = 0)
+
+  # Clean differently depending on geometry type
+  geom_type <- unique(sf::st_geometry_type(x))
+
+  if (any(geom_type %in% c("POLYGON", "MULTIPOLYGON"))) {
+    x <- sf::st_make_valid(x)
+    x <- sf::st_set_precision(x, 1e6)
+    x <- sf::st_buffer(x, dist = 0)
+  } else if (any(geom_type %in% c("LINESTRING", "MULTILINESTRING"))) {
+    # Avoid buffer for lines!
+    x <- sf::st_set_precision(x, 1e6)
+    x <- sf::st_make_valid(x)
+  }
+
+  # Return to geographic coordinates
   sf::st_transform(x, 4326)
 }
 
@@ -44,6 +59,7 @@ get_greenspaces <- function(zone, mode = "standard") {
     leisure_q <- osmdata::opq(bbox = bbox) |>
       osmdata::add_osm_feature(key = "leisure")
     leisure <- osmdata::osmdata_sf(leisure_q)$osm_polygons
+    if (!is.null(leisure) && nrow(leisure) > 0) leisure <- clean_geometry(leisure)
 
     # Query 2: landuse
     landuse_q <- osmdata::opq(bbox = bbox) |>
@@ -51,15 +67,17 @@ get_greenspaces <- function(zone, mode = "standard") {
         "forest", "meadow", "grass", "village_green", "allotments", "flowerbed", "recreation_ground"
       ))
     landuse <- osmdata::osmdata_sf(landuse_q)$osm_polygons
+    if (!is.null(landuse) && nrow(landuse) > 0) landuse <- clean_geometry(landuse)
 
     # Query 3: natural
     natural_q <- osmdata::opq(bbox = bbox) |>
       osmdata::add_osm_feature(key = "natural", value = c("wood", "scrub", "grassland"))
     natural <- osmdata::osmdata_sf(natural_q)$osm_polygons
+    if (!is.null(natural) && nrow(natural) > 0) natural <- clean_geometry(natural)
 
-    # Combine all
+    # Combine (skip NULLs)
     greens <- dplyr::bind_rows(
-      leisure, landuse, natural
+      list(leisure, landuse, natural)[sapply(list(leisure, landuse, natural), function(x) !is.null(x))]
     )
   } else {
     stop("Invalid mode. Use 'standard' or 'broad'.")
@@ -127,6 +145,7 @@ get_bluespaces <- function(zone) {
 #' Get road network within a travel zone
 #'
 #' Returns roads (highways) that intersect a travel zone.
+#'
 #' @param area A place name (e.g. "Würzburg")
 #' @param zone An `sf` polygon from `travel_zone()`
 #' @return An `sf` object of road lines or NULL if none found
@@ -134,7 +153,6 @@ get_bluespaces <- function(zone) {
 get_roads <- function(area, zone) {
   if (!requireNamespace("osmdata", quietly = TRUE)) stop("Package 'osmdata' is required.")
 
-  # Use bbox from zone for faster and accurate query
   bbox <- sf::st_bbox(zone)
 
   query <- osmdata::opq(bbox = bbox) |>
@@ -146,16 +164,12 @@ get_roads <- function(area, zone) {
   if (!is.null(roads) && nrow(roads) > 0) {
     roads <- clean_geometry(roads)
 
-    if (sf::st_crs(roads) != sf::st_crs(zone)) {
-      zone <- sf::st_transform(zone, sf::st_crs(roads))
-    }
-
-    roads <- sf::st_filter(roads, zone, .predicate = sf::st_intersects)
+    idx <- sf::st_intersects(roads, zone, sparse = FALSE)
+    roads <- roads[apply(idx, 1, any), ]
     message("Road features returned: ", nrow(roads))
+    return(roads)
   } else {
     message("No road features found.")
     return(NULL)
   }
-
-  return(roads)
 }
