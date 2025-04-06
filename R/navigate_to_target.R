@@ -60,3 +60,19 @@ navigate_to_target <- function(location, zone, greens, blues, target_type = "gre
 
   return(route)
 }
+
+#' Calculate and save the length of a route
+#'
+#' @param route An sf LINESTRING object representing a route, from "navigate_to_target()"
+#'
+#' @return The length of the route in a numeric unit (meters)
+#' @export
+route_length <- function(route){
+  #Reprojection of CRS in case still using degrees/mins
+  reprojected_route <- sf::st_transform(route, 3857)
+
+  length_m <- sf::st_length(reprojected_route)
+
+  #Saving as.numeric to use for labelling/plotting
+  return(as.numeric(length_m))
+}
