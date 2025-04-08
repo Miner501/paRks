@@ -70,26 +70,43 @@ plot_travel_map <- function(
   }
 
 
+  # Empty vectors containing legend item as well as color information
+  legend_items <- c()
+  legend_colors <- c()
 
   # Plot base zone for context
   plot(sf::st_geometry(zone), col = NA, border = color_zone, lwd = 3, main = title)
 
-  if (show_greens && !is.null(greens)) {
+  if (show_greens && !is.null(greens)){
+    legend_items <- c(legend_items, "Green Spaces")
+    legend_colors <- c(legend_colors, color_greens)
     plot(sf::st_geometry(greens), col = color_greens, add = TRUE)
   }
 
   if (show_blues && !is.null(blues)) {
+    legend_items <- c(legend_items, "Blue Spaces")
+    legend_colors <- c(legend_colors, color_blues)
     clipped_blues <- sf::st_intersection(blues, zone)
     plot(sf::st_geometry(clipped_blues), col = color_blues, add = TRUE)
   }
 
   if (show_roads && !is.null(roads)) {
+    legend_items <- c(legend_items, "Roads")
+    legend_colors <- c(legend_colors, color_roads)
     clipped_roads <- sf::st_intersection(roads, zone)
     plot(sf::st_geometry(clipped_roads), col = color_roads, add = TRUE)
   }
 
   if (show_route && !is.null(route)) {
+    legend_items <- c(legend_items, "Route")
+    legend_colors <- c(legend_colors, color_route)
     plot(sf::st_geometry(route), col = color_route, lwd = 3, add = TRUE)
   }
+
+  # Making the map look pretty
+  legend("bottomright", legend = legend_items, fill = legend_colors, border = "black", cex = 0.8, bg = "white", title = "Legend")
+  mapsf::mf_scale(pos = "bottomleft", lwd = 1.5)
+  mapsf::mf_arrow(pos = "topright", cex = 1.5)
+
 }
 
