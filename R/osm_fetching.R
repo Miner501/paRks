@@ -203,13 +203,13 @@ get_bluespaces <- function(zone) {
 #'
 #' Returns roads (highways) that intersect a travel zone.
 #'
-#' @param area A place name (e.g. "Würzburg")
 #' @param zone An `sf` polygon from `travel_zone()`
 #' @return An `sf` object of road lines or NULL if none found
 #' @export
-get_roads <- function(area, zone) {
+get_roads <- function(zone) {
   if (!requireNamespace("osmdata", quietly = TRUE)) stop("Package 'osmdata' is required.")
 
+  # Use bounding box of the zone for the query
   bbox <- sf::st_bbox(zone)
 
   query <- osmdata::opq(bbox = bbox) |>
@@ -221,8 +221,13 @@ get_roads <- function(area, zone) {
   if (!is.null(roads) && nrow(roads) > 0) {
     roads <- clean_geometry(roads)
 
-    idx <- sf::st_intersects(roads, zone, sparse = FALSE)
-    roads <- roads[apply(idx, 1, any), ]
+    # Ensure CRS match
+    if (sf::st_crs(roads) != sf::st_crs(zone)) {
+      zone <- sf::st_transform(zone, sf::st_crs(roads))
+    }
+
+    # Clip to zone
+    roads <- sf::st_filter(roads, zone, .predicate = sf::st_intersects)
     message("Road features returned: ", nrow(roads))
     return(roads)
   } else {
