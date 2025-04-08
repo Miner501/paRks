@@ -13,6 +13,7 @@
 #' @param show_roads Logical. Should roads be plotted? Default `TRUE`.
 #' @param show_route Logical. Should the travel route be plotted? Default `TRUE`.
 #' @param title Title to show at the top of the plot. Default is "Travel Zone Map".
+#' @param palette Default is "normal", "deuteranopia", "protanopia", "tritanopia" are also possible.
 #'
 #' @return A base R plot showing the specified layers.
 #' @export
@@ -27,31 +28,68 @@ plot_travel_map <- function(
     show_blues = TRUE,
     show_roads = TRUE,
     show_route = TRUE,
-    title = "Travel Zone Map"
+    title = "Travel Zone Map",
+    palette = "normal"
 ) {
-  # Always show the zone to give geographic context
-  plot(sf::st_geometry(zone), col = NA, border = "red", lwd = 3, main = title)
-
-  # Add green spaces if available and requested (for highlighting natural areas)
-  if (show_greens == TRUE && !is.null(greens)) {
-    plot(sf::st_geometry(greens), col = "green", add = TRUE)
+  # Added a fallback in case input palette is incorrect
+  if (!(palette %in% c("normal", "deuteranopia", "protanopia", "tritanopia"))) {
+    warning("Invalid palette selected. Falling back to 'normal'.")
+    palette <- "normal"
+  }
+  # Set color values depending on the palette
+  if (palette == "normal") {
+    color_greens <- "green"
+    color_blues  <- "blue"
+    color_roads  <- "grey"
+    color_route  <- "purple"
+    color_zone   <- "red"
+  }
+  # Set color values for Deuteranopia
+  if (palette == "deuteranopia"){
+    color_greens <- "#009E73"
+    color_blues <- "#56B4E9"
+    color_roads <- "grey"
+    color_route <- "#CC79A7"
+    color_zone <- "#E69F00"
+  }
+  # Set color values for Protanopia
+  if (palette == "protanopia"){
+    color_greens <- "#009E73"
+    color_blues <- "#0072B2"
+    color_roads <- "grey"
+    color_route <- "#E69F00"
+    color_zone <- "#D55E00"
+  }
+  # Set color values for Tritanopia
+  if (palette == "tritanopia"){
+    color_greens <- "#009E73"
+    color_blues <- "#E69F00"
+    color_roads <- "grey"
+    color_route <- "#0072B2"
+    color_zone <- "#D55E00"
   }
 
-  # Add blue spaces, clipped to zone to avoid stretching the plot extent
-  if (show_blues == TRUE && !is.null(blues)) {
+
+
+  # Plot base zone for context
+  plot(sf::st_geometry(zone), col = NA, border = color_zone, lwd = 3, main = title)
+
+  if (show_greens && !is.null(greens)) {
+    plot(sf::st_geometry(greens), col = color_greens, add = TRUE)
+  }
+
+  if (show_blues && !is.null(blues)) {
     clipped_blues <- sf::st_intersection(blues, zone)
-    plot(sf::st_geometry(clipped_blues), col = "blue", add = TRUE)
+    plot(sf::st_geometry(clipped_blues), col = color_blues, add = TRUE)
   }
 
-  # Add roads, clipped to zone to maintain focus on the reachable area
-  if (show_roads == TRUE && !is.null(roads)) {
+  if (show_roads && !is.null(roads)) {
     clipped_roads <- sf::st_intersection(roads, zone)
-    plot(sf::st_geometry(clipped_roads), col = "grey", add = TRUE)
+    plot(sf::st_geometry(clipped_roads), col = color_roads, add = TRUE)
   }
 
-  # Add route line if provided, to visualize navigation path
-  if (show_route == TRUE && !is.null(route)) {
-    plot(sf::st_geometry(route), col = "purple", lwd = 3, add = TRUE)
+  if (show_route && !is.null(route)) {
+    plot(sf::st_geometry(route), col = color_route, lwd = 3, add = TRUE)
   }
 }
 
