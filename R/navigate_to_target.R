@@ -1,16 +1,20 @@
 #' Navigate to a green or blue space based on user preference
 #'
-#' Prioritizes either the closest or largest destination within a given travel zone
-#' and returns the route to it.
+#' Prioritizes either the closest or largest destination within a given travel zone,
+#' calculates the route to it, and returns both the route and its travel distance.
 #'
 #' @param location A tibble with `lat` and `lon` columns (from geocoding)
-#' @param zone An sf polygon representing the travel zone
-#' @param greens sf object of green spaces
-#' @param blues sf object of blue spaces
-#' @param target_type "green" or "blue"
-#' @param preference "closest" or "largest"
+#' @param zone An `sf` POLYGON representing the travel zone
+#' @param greens An `sf` object of green space geometries (e.g. parks)
+#' @param blues An `sf` object of blue space geometries (e.g. rivers)
+#' @param target_type One of `"green"` or `"blue"` to select destination type
+#' @param preference One of `"closest"` or `"largest"` to define selection criteria
 #'
-#' @return An sf LINESTRING object representing the route, or NULL if not found
+#' @return A list with two elements:
+#' \describe{
+#'   \item{route}{An `sf` LINESTRING object representing the road network route}
+#'   \item{length_m}{A numeric value giving the route length in meters}
+#' }
 #' @export
 navigate_to_target <- function(location, zone, greens, blues, target_type = "green", preference = "closest") {
   if (!requireNamespace("osrm", quietly = TRUE)) stop("Package 'osrm' is required.")
@@ -61,7 +65,14 @@ navigate_to_target <- function(location, zone, greens, blues, target_type = "gre
   # Route computation based on shortest path along road network
   route <- osrm::osrmRoute(src = src, dst = dst)
 
-  return(route)
+  # Reprojection of route to CRS that uses meters
+  reprojected_route <- sf::st_transform(route, 3857)
+
+  length_m <- sf::st_length(reprojected_route)
+  route_length <- as.numeric(length_m)
+
+
+  list(route = route, length_m = route_length)
 }
 
 #' Calculate and save the length of a route
