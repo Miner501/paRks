@@ -1,115 +1,3 @@
-#' Plot a travel zone map with optional layers
-#'
-#' Plots the travel zone along with optional layers like green spaces, blue spaces, roads, and route.
-#' Each layer can be toggled with a logical flag. Layers are clipped to the zone extent.
-#'
-#' @param zone An `sf` POLYGON object representing the travel zone.
-#' @param greens Optional `sf` object of green space polygons.
-#' @param blues Optional `sf` object of blue space polygons or lines.
-#' @param roads Optional `sf` object of road geometries (usually lines).
-#' @param route Optional `sf` LINESTRING representing the path to a destination.
-#' @param show_greens Logical. Should green spaces be plotted? Default `TRUE`.
-#' @param show_blues Logical. Should blue spaces be plotted? Default `TRUE`.
-#' @param show_roads Logical. Should roads be plotted? Default `TRUE`.
-#' @param show_route Logical. Should the travel route be plotted? Default `TRUE`.
-#' @param title Title to show at the top of the plot. Default is "Travel Zone Map".
-#' @param palette Default is "normal", "deuteranopia", "protanopia", "tritanopia" are also possible.
-#'
-#' @return A base R plot showing the specified layers.
-#' @export
-
-plot_travel_map <- function(
-    zone,
-    greens = NULL,
-    blues = NULL,
-    roads = NULL,
-    route = NULL,
-    show_greens = TRUE,
-    show_blues = TRUE,
-    show_roads = TRUE,
-    show_route = TRUE,
-    title = "Travel Zone Map",
-    palette = "normal"
-) {
-  # Added a fallback in case input palette is incorrect
-  if (!(palette %in% c("normal", "deuteranopia", "protanopia", "tritanopia"))) {
-    warning("Invalid palette selected. Falling back to 'normal'.")
-    palette <- "normal"
-  }
-  # Set color values depending on the palette
-  if (palette == "normal") {
-    color_greens <- "green"
-    color_blues  <- "blue"
-    color_roads  <- "grey"
-    color_route  <- "purple"
-    color_zone   <- "red"
-  }
-  # Set color values for Deuteranopia
-  if (palette == "deuteranopia"){
-    color_greens <- "#009E73"
-    color_blues <- "#56B4E9"
-    color_roads <- "grey"
-    color_route <- "#CC79A7"
-    color_zone <- "#E69F00"
-  }
-  # Set color values for Protanopia
-  if (palette == "protanopia"){
-    color_greens <- "#009E73"
-    color_blues <- "#0072B2"
-    color_roads <- "grey"
-    color_route <- "#E69F00"
-    color_zone <- "#D55E00"
-  }
-  # Set color values for Tritanopia
-  if (palette == "tritanopia"){
-    color_greens <- "#009E73"
-    color_blues <- "#E69F00"
-    color_roads <- "grey"
-    color_route <- "#0072B2"
-    color_zone <- "#D55E00"
-  }
-
-
-  # Empty vectors containing legend item as well as color information
-  legend_items <- c()
-  legend_colors <- c()
-
-  # Plot base zone for context
-  plot(sf::st_geometry(zone), col = NA, border = color_zone, lwd = 3, main = title)
-
-  if (show_greens && !is.null(greens)){
-    legend_items <- c(legend_items, "Green Spaces")
-    legend_colors <- c(legend_colors, color_greens)
-    plot(sf::st_geometry(greens), col = color_greens, add = TRUE)
-  }
-
-  if (show_blues && !is.null(blues)) {
-    legend_items <- c(legend_items, "Blue Spaces")
-    legend_colors <- c(legend_colors, color_blues)
-    clipped_blues <- sf::st_intersection(blues, zone)
-    plot(sf::st_geometry(clipped_blues), col = color_blues, add = TRUE)
-  }
-
-  if (show_roads && !is.null(roads)) {
-    legend_items <- c(legend_items, "Roads")
-    legend_colors <- c(legend_colors, color_roads)
-    clipped_roads <- sf::st_intersection(roads, zone)
-    plot(sf::st_geometry(clipped_roads), col = color_roads, add = TRUE)
-  }
-
-  if (show_route && !is.null(route)) {
-    legend_items <- c(legend_items, "Route")
-    legend_colors <- c(legend_colors, color_route)
-    plot(sf::st_geometry(route), col = color_route, lwd = 3, add = TRUE)
-  }
-
-  # Making the map look pretty
-  legend("bottomright", legend = legend_items, fill = legend_colors, border = "black", cex = 0.8, bg = "white", title = "Legend")
-  mapsf::mf_scale(pos = "bottomleft", lwd = 1.5)
-  mapsf::mf_arrow(pos = "topright", cex = 1.5)
-
-}
-
 # Define color palettes for different vision types
 palette_colors <- list(
   normal = list(
@@ -136,6 +24,8 @@ palette_colors <- list(
 #' Replaces base R plotting with ggplot2 for better styling and customization.
 #' Allows for visualizing green/blue spaces, roads, routes, and the travel zone itself.
 #'
+#' @param route_distance Numeric. Distance in meters to the destination, used in caption.
+#' @param target_type String. Either "green" or "blue", describing type of target shown in caption.
 #' @param zone An `sf` POLYGON object representing the travel zone.
 #' @param greens Optional `sf` object of green space polygons (parks, gardens, etc.).
 #' @param blues Optional `sf` object of blue space polygons or lines (rivers, lakes, etc.).
@@ -149,6 +39,9 @@ palette_colors <- list(
 #' @param title Title to be displayed at the top of the plot. Default is `"Travel Zone Map (ggplot2)"`.
 #' @param palette Name of the color palette to use. Options: `"normal"`, `"deuteranopia"`, `"protanopia"`, `"tritanopia"`.
 #'
+#' @importFrom ggplot2 ggplot geom_sf aes scale_fill_manual scale_color_manual labs guide_legend theme unit guides
+#' @importFrom ggspatial annotation_scale annotation_north_arrow north_arrow_fancy_orienteering
+#'
 #' @return A ggplot object showing the map with specified features.
 #' @export
 plot_travel_map_gg <- function(
@@ -157,13 +50,15 @@ plot_travel_map_gg <- function(
     blues = NULL,
     roads = NULL,
     route = NULL,
+    route_distance = NULL,
     start_location = NULL,
     show_greens = TRUE,
     show_blues = TRUE,
     show_roads = TRUE,
     show_route = TRUE,
     title = "Travel Zone Map (ggplot2)",
-    palette = "normal"
+    palette = "normal",
+    target_type = NULL
 ) {
   # Required packages
   if (!requireNamespace("ggplot2", quietly = TRUE)) stop("ggplot2 is required.")
@@ -191,11 +86,22 @@ plot_travel_map_gg <- function(
     start_sf <- sf::st_as_sf(start_location, coords = c("lon", "lat"), crs = 4326)
   }
 
+  # Dynamic caption text that shows the route_distance as well
+  if (!is.null(route_distance)) {
+    caption_text <- paste0(
+      "This map shows how far you are from a ", target_type,
+      " space that can be used for recreational activities. You are ",
+      round(route_distance), " meters away from the selected destination."
+    )
+  } else {
+    caption_text <- NULL
+  }
+
   # Initialize ggplot with zone layer
   # Using aes(color = ...) here creates a named group to trigger a legend entry
   p <- ggplot2::ggplot() +
     ggplot2::geom_sf(data = zone, ggplot2::aes(color = "Zone"), fill = NA, linewidth = 1.2) +
-    ggplot2::ggtitle(title)
+    ggplot2::labs(title = title, caption = caption_text)
 
   # Optional layers as well as clipping of roads and blues to the zone
   if (show_greens && !is.null(greens)) {
