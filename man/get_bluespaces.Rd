@@ -7,11 +7,13 @@
 get_bluespaces(zone)
 }
 \arguments{
-\item{zone}{An \code{sf} polygon (e.g., from \code{travel_zone()})}
+\item{zone}{An \code{sf} polygon object representing the travel zone, typically returned by \code{travel_zone()}.}
 }
 \value{
-An \code{sf} object of blue space geometries, or NULL if none found
+An \code{sf} object containing blue space geometries (\code{LINESTRING} and/or \code{POLYGON}) that intersect the zone,
+or \code{NULL} if no such features are found.
 }
 \description{
-Returns rivers, lakes, streams, and other water bodies that intersect the given travel zone.
+Fetches and filters OpenStreetMap features related to natural water and waterway features
+(e.g., rivers, streams, canals, lakes, wetlands) within a given travel zone.
 }

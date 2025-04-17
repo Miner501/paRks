@@ -12,13 +12,13 @@ URL: https://github.com/Miner501/paRks
 BugReports: https://github.com/Miner501/paRks/issues
 Imports:
     tibble,
-    magrittr,
     sf,
     tidygeocoder,
     osmdata,
     osrm,
-    leaflet,
     dplyr,
-    mapsf
+    ggplot2,
+    ggspatial
+
 
 

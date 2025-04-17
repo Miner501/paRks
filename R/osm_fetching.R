@@ -102,50 +102,19 @@ get_greenspaces <- function(zone, mode = "standard", min_area_ha = NULL) {
 
 #' Get blue spaces within a travel zone
 #'
-#' Returns rivers, lakes, streams, and other water bodies that intersect the given travel zone.
+#' Fetches and filters OpenStreetMap features related to natural water and waterway features
+#' (e.g., rivers, streams, canals, lakes, wetlands) within a given travel zone.
 #'
-#' @param zone An `sf` polygon (e.g., from `travel_zone()`)
-#' @return An `sf` object of blue space geometries, or NULL if none found
+#' @param zone An `sf` polygon object representing the travel zone, typically returned by `travel_zone()`.
+#'
+#' @return An `sf` object containing blue space geometries (`LINESTRING` and/or `POLYGON`) that intersect the zone,
+#'         or `NULL` if no such features are found.
+#'
+#' @importFrom sf st_bbox st_filter st_crs st_transform
+#' @importFrom osmdata opq add_osm_feature osmdata_sf
+#' @importFrom dplyr bind_rows
+#'
 #' @export
-# get_bluespaces <- function(zone) {
-#   if (!requireNamespace("osmdata", quietly = TRUE)) stop("Package 'osmdata' is required.")
-#
-#   bbox <- sf::st_bbox(zone)
-#
-#   query <- osmdata::opq(bbox = bbox) |>
-#     osmdata::add_osm_feature(key = "natural", value = c("water", "wetland")) |>
-#     osmdata::add_osm_feature(key = "waterway", value = c("river", "stream", "canal"))
-#
-#   result <- osmdata::osmdata_sf(query)
-#   polys <- result$osm_polygons
-#   lines <- result$osm_lines
-#
-#   safe_filter <- function(x) {
-#     x <- clean_geometry(x)
-#     if (sf::st_crs(x) != sf::st_crs(zone)) {
-#       zone <- sf::st_transform(zone, sf::st_crs(x))
-#     }
-#     sf::st_filter(x, zone, .predicate = sf::st_intersects)
-#   }
-#
-#   if (!is.null(polys) && nrow(polys) > 0) polys <- safe_filter(polys) else polys <- NULL
-#   if (!is.null(lines) && nrow(lines) > 0) lines <- safe_filter(lines) else lines <- NULL
-#
-#   if (!is.null(polys) && !is.null(lines)) {
-#     blues <- dplyr::bind_rows(polys, lines)
-#   } else if (!is.null(polys)) {
-#     blues <- polys
-#   } else if (!is.null(lines)) {
-#     blues <- lines
-#   } else {
-#     message("No blue features found.")
-#     return(NULL)
-#   }
-#
-#   message("Blue features returned: ", nrow(blues))
-#   return(blues)
-# }
-
 get_bluespaces <- function(zone) {
   if (!requireNamespace("osmdata", quietly = TRUE)) stop("Package 'osmdata' is required.")
 

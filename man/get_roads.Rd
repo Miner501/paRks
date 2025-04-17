@@ -4,11 +4,9 @@
 \alias{get_roads}
 \title{Get road network within a travel zone}
 \usage{
-get_roads(area, zone)
+get_roads(zone)
 }
 \arguments{
-\item{area}{A place name (e.g. "Würzburg")}
-
 \item{zone}{An \code{sf} polygon from \code{travel_zone()}}
 }
 \value{

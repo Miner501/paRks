@@ -4,15 +4,17 @@
 \alias{get_greenspaces}
 \title{Get green spaces within a travel zone}
 \usage{
-get_greenspaces(zone, mode = "standard")
+get_greenspaces(zone, mode = "standard", min_area_ha = NULL)
 }
 \arguments{
 \item{zone}{An \code{sf} polygon (from \code{travel_zone()})}
 
-\item{mode}{"standard" (parks & forests) or "broad" (adds meadows, grass, etc.)}
+\item{mode}{"standard" or "broad"}
+
+\item{min_area_ha}{Minimum area in hectares (optional)}
 }
 \value{
-An \code{sf} object of green polygons intersecting the zone, or NULL if none found
+An \code{sf} object of green polygons intersecting the zone
 }
 \description{
 Returns parks, gardens, forests, meadows, and other green spaces within the travel zone.

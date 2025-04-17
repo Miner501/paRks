@@ -2,27 +2,19 @@
 % Please edit documentation in R/travel_zone.R
 \name{travel_zone}
 \alias{travel_zone}
-\title{Generate a travel zone polygon from a location}
+\title{Generate a travel zone polygon based on distance}
 \usage{
-travel_zone(location, mode = "walk", distance_km = NULL, time_min = NULL)
+travel_zone(location, distance_km)
 }
 \arguments{
-\item{location}{A tibble from geocode_address() or geocode_coords(), containing lat and lon columns.}
+\item{location}{A tibble from geocode_address() or geocode_coords(), with \code{lat} and \code{lon} columns.}
 
-\item{mode}{Travel mode: "walk", "bike", or "car".}
-
-\item{distance_km}{Distance in kilometers (optional if time_min is given).}
-
-\item{time_min}{Travel time in minutes (optional if distance_km is given).}
+\item{distance_km}{Travel distance in kilometers.}
 }
 \value{
 An \code{sf} polygon of the travel zone.
 }
 \description{
-Returns a polygon showing the area you can reach from a starting location,
-based on travel time or distance, using the \code{osrm} package.
-}
-\examples{
-loc <- geocode_address("Würzburg")
-travel_zone(loc, mode = "walk", distance_km = 1)
+Returns a polygon representing the area reachable from a given location,
+based on a straight-line buffer (for short distances) or an OSRM-based isochrone (for longer ones).
 }
