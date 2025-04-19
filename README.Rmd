@@ -6,12 +6,15 @@ output: github_document
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
+  fig.width = 12,    # increase width
+  fig.height = 8,    # optional: increase height
+  out.width = "100%",
   collapse = TRUE,
   comment = "#>",
-  fig.path = "man/figures/README-",
-  out.width = "100%"
+  fig.path = "man/figures/README-"
 )
 ```
+
 
 # paRks
 
@@ -50,6 +53,7 @@ zone <- travel_zone(location, distance_km = 5)
 ```
 
 Once the zone has been calculated based on OSM routing information you must fetch the blue and green spaces of within the zone as well as the road network. The road network is useful to make the final map more visually pleasing.
+
 ```{r fetching}
 greens <- get_greenspaces(zone, mode = "standard") # mode can also be set to "broad" to include any type of green space, even ones that may not be publicly accessible.
 
@@ -57,7 +61,9 @@ blues  <- get_bluespaces(zone)
 
 roads  <- get_roads(zone)
 ```
+
 At this point you can now start navigating. You can select if you would like to be navigated to a green or blue space. If selecting a green space you also have the choice between the largest and closest.
+
 ```{r navigation}
 result <- navigate_to_target(
   location = location,
@@ -69,8 +75,8 @@ result <- navigate_to_target(
 )
 ```
 
-
 Finally we can plot our results on a map.
+
 ```{r mapping}
 plot_travel_map_gg(
   zone = zone,
