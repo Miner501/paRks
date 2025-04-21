@@ -29,7 +29,6 @@ install_github("Miner501/paRks")
 | geocode_address(address) | Uses the `tidygeocoder` package and the Nominatim API to convert a street address into latitude and longitude coordinates. |
 | geocode_coords(lat, lon) | Creates a tibble from latitude and longitude values to represent a geographic point. |
 | travel_zone(location, distance_km) | Generates a polygon travel zone either using a circular buffer for short distances or OSRM-based isochrones for longer travel ranges. |
-| FloodMap() | Create a map displaying calculated flood areas based on date or by flood size. |
 | get_greenspaces(zone, mode, min_area_ha) | Downloads and filters OpenStreetMap green features (like parks and forests) within a specified travel zone. |
 | get_bluespaces(zone) | Retrieves water-related features (like rivers, lakes, and wetlands) from OpenStreetMap within a travel zone. |
 | get_roads(zone) | Fetches road network features that intersect with a specified travel zone from OpenStreetMap. |
@@ -89,7 +88,7 @@ result <- navigate_to_target(
 )
 ```
 
-Finally we can plot our results on a map.
+Finally you can plot your results on a map.
 
 ``` r
 plot_travel_map_gg(
