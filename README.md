@@ -22,6 +22,20 @@ library(devtools)
 install_github("Miner501/paRks")
 ```
 
+## Package Functions
+
+| **Function Name** | **Description** |
+|----|----|
+| geocode_address(address) | Uses the `tidygeocoder` package and the Nominatim API to convert a street address into latitude and longitude coordinates. |
+| geocode_coords(lat, lon) | Creates a tibble from latitude and longitude values to represent a geographic point. |
+| travel_zone(location, distance_km) | Generates a polygon travel zone either using a circular buffer for short distances or OSRM-based isochrones for longer travel ranges. |
+| FloodMap() | Create a map displaying calculated flood areas based on date or by flood size. |
+| get_greenspaces(zone, mode, min_area_ha) | Downloads and filters OpenStreetMap green features (like parks and forests) within a specified travel zone. |
+| get_bluespaces(zone) | Retrieves water-related features (like rivers, lakes, and wetlands) from OpenStreetMap within a travel zone. |
+| get_roads(zone) | Fetches road network features that intersect with a specified travel zone from OpenStreetMap. |
+| navigate_to_target(location, zone, greens, blues, target_type, preference) | Selects the best green or blue space based on user preference (closest or largest) and computes a route to it using OSRM. |
+| plot_travel_map_gg(…) | Uses `ggplot2` and `sf` to create a detailed map showing green/blue spaces, roads, a travel zone, and a route from a starting point. |
+
 ## Example
 
 The first step of using paRks is to geocode an address or a set of
@@ -50,14 +64,14 @@ road network. The road network is useful to make the final map more
 visually pleasing.
 
 ``` r
-greens <- get_greenspaces(zone, mode = "standard") # mode can also be set to "broad" to include any type of green space, even ones that may not be publicly accessible.
+greens <- get_greenspaces(zone, mode = "standard") # mode can also be set to "broad" to include any type of green space, even ones that may not be publicly accessible. You can also set the minimum size by using min_area_hea = 2 etc..
 #> Green features returned: 157
 
 blues  <- get_bluespaces(zone)
 #> Blue features returned: 69
 
 roads  <- get_roads(zone)
-#> Road features returned: 6174
+#> Road features returned: 6183
 ```
 
 At this point you can now start navigating. You can select if you would
@@ -71,7 +85,7 @@ result <- navigate_to_target(
   greens = greens,
   blues = blues,
   target_type = "green",     # or "blue"
-  preference = "largest"     # or "largest"
+  preference = "largest"     # or "closest"
 )
 ```
 
@@ -87,7 +101,8 @@ plot_travel_map_gg(
   route_distance = result$length_m,
   start_location = location,
   target_type = "green",  # or "blue"
-  palette = "normal" #this is where you can select if you have any form of colorblindness mentioned earlier in the Readme
+  palette = "normal", #this is where you can select if you have any form of colorblindness mentioned earlier in the Readme
+  title = "Example Map of paRks"
 )
 #> Warning: attribute variables are assumed to be spatially constant throughout
 #> all geometries
@@ -98,3 +113,20 @@ plot_travel_map_gg(
 ```
 
 <img src="man/figures/README-mapping-1.png" width="100%" />
+
+## Limitations
+
+The way the OSRM package is structured only allows for car based
+routing. This means that the route it suggests you to take, may not be
+the shortest or most realistic one. Additionally, because OSM is a
+community project, there are some small issues in the road-network. This
+may cause there to be “islands” within the zone that are shown as being
+inaccessible, even though in actuality they are perfectly accessible. An
+example of this is shown in the plot above, where one of these “islands
+of inaccessibility” is located just north of the large blue space.
+Additionally OSRM struggles with routing for very short distances,
+causing the travel zone calculation to become buggy, if the distance to
+be calculated is less than 2 km. These are known bugs, for which there
+is currently no available simple fix. In the future it may be possible
+to create an own API for OSM-based routing that includes walking, or
+cycling.
