@@ -57,3 +57,22 @@ A ggplot object showing the map with specified features.
 Replaces base R plotting with ggplot2 for better styling and customization.
 Allows for visualizing green/blue spaces, roads, routes, and the travel zone itself.
 }
+\examples{
+location <- geocode_address("Kiliansplatz, Wuerzburg")
+zone <- travel_zone(location, 5)
+\dontrun{
+result <- navigate_to_target(location, zone, greens, blues)
+plot_travel_map_gg(
+  zone = zone,
+  greens = greens,
+  blues = blues,
+  roads = roads,
+  route = result$route,
+  route_distance = result$length_m,
+  start_location = location,
+  target_type = "green"
+)
+}
+
+
+}

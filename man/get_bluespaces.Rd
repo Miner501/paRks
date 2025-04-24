@@ -17,3 +17,11 @@ or \code{NULL} if no such features are found.
 Fetches and filters OpenStreetMap features related to natural water and waterway features
 (e.g., rivers, streams, canals, lakes, wetlands) within a given travel zone.
 }
+\examples{
+\dontrun{
+location <- geocode_address("Kiliansplatz, Wuerzburg")
+zone <- travel_zone(location, 5)
+blues <- get_bluespaces(zone)
+}
+
+}

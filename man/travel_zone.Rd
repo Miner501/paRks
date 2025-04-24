@@ -18,3 +18,8 @@ An \code{sf} polygon of the travel zone.
 Returns a polygon representing the area reachable from a given location,
 based on a straight-line buffer (for short distances) or an OSRM-based isochrone (for longer ones).
 }
+\examples{
+location <- geocode_address("Kiliansplatz, Wuerzburg")
+zone <- travel_zone(location, 5)
+
+}

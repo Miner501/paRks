@@ -6,10 +6,10 @@
 clean_geometry <- function(x) {
   if (nrow(x) == 0 || is.null(x)) return(x)
 
-  # Project temporarily to planar
+  # Transform to planar coordinates for reliable geometry operations
   x <- sf::st_transform(x, 3857)
 
-  # Clean differently depending on geometry type
+  # Use different repair strategies depending on shape type
   geom_type <- unique(sf::st_geometry_type(x))
 
   if (any(geom_type %in% c("POLYGON", "MULTIPOLYGON"))) {
@@ -17,12 +17,12 @@ clean_geometry <- function(x) {
     x <- sf::st_set_precision(x, 1e6)
     x <- sf::st_buffer(x, dist = 0)
   } else if (any(geom_type %in% c("LINESTRING", "MULTILINESTRING"))) {
-    # Avoid buffer for lines!
+    # Buffering lines can distort them, skip that step for line features
     x <- sf::st_set_precision(x, 1e6)
     x <- sf::st_make_valid(x)
   }
 
-  # Return to geographic coordinates
+  # Return to geographic coordinates for compatibility with mapping functions
   sf::st_transform(x, 4326)
 }
 
@@ -34,13 +34,20 @@ clean_geometry <- function(x) {
 #' @param mode "standard" or "broad"
 #' @param min_area_ha Minimum area in hectares (optional)
 #' @return An `sf` object of green polygons intersecting the zone
+#' @examples
+#' \dontrun{
+#' location <- geocode_address("Kiliansplatz, Wuerzburg")
+#' zone <- travel_zone(location, 5)
+#' greens <- get_greenspaces(zone, mode = "standard")
+#' }
+#'
 #' @export
 get_greenspaces <- function(zone, mode = "standard", min_area_ha = NULL) {
   if (!requireNamespace("osmdata", quietly = TRUE)) stop("Package 'osmdata' is required.")
 
   bbox <- sf::st_bbox(zone)
 
-  # Helper to safely clean and intersect
+  # Ensures geometries are valid and clipped to the travel zone (avoids rendering issues and keeps plot focused)
   safe_filter <- function(sfobj) {
     sfobj <- clean_geometry(sfobj)
     if (sf::st_crs(sfobj) != sf::st_crs(zone)) {
@@ -50,12 +57,15 @@ get_greenspaces <- function(zone, mode = "standard", min_area_ha = NULL) {
     sfobj[apply(idx, 1, any), ]
   }
 
+  # Chosen to reflect commonly accessible recreational spaces
   if (mode == "standard") {
     query <- osmdata::opq(bbox = bbox) |>
       osmdata::add_osm_feature(key = "leisure", value = c("park", "garden", "recreation_ground"))
     result <- osmdata::osmdata_sf(query)
     greens <- result$osm_polygons
-  } else if (mode == "broad") {
+  }
+    # Captures a wider definition of green space, even if not all are publicly accessible
+    else if (mode == "broad") {
     leisure_q <- osmdata::opq(bbox = bbox) |>
       osmdata::add_osm_feature(key = "leisure")
     leisure <- osmdata::osmdata_sf(leisure_q)$osm_polygons
@@ -81,6 +91,7 @@ get_greenspaces <- function(zone, mode = "standard", min_area_ha = NULL) {
   }
 
   if (!is.null(greens) && nrow(greens) > 0) {
+    # Discards green features that fall completely outside the travel zone
     greens <- safe_filter(greens)
 
     # Filter by area in hectares (optional)
@@ -110,6 +121,13 @@ get_greenspaces <- function(zone, mode = "standard", min_area_ha = NULL) {
 #' @return An `sf` object containing blue space geometries (`LINESTRING` and/or `POLYGON`) that intersect the zone,
 #'         or `NULL` if no such features are found.
 #'
+#'@examples
+#' \dontrun{
+#' location <- geocode_address("Kiliansplatz, Wuerzburg")
+#' zone <- travel_zone(location, 5)
+#' blues <- get_bluespaces(zone)
+#' }
+#'
 #' @importFrom sf st_bbox st_filter st_crs st_transform
 #' @importFrom osmdata opq add_osm_feature osmdata_sf
 #' @importFrom dplyr bind_rows
@@ -120,7 +138,7 @@ get_bluespaces <- function(zone) {
 
   bbox <- sf::st_bbox(zone)
 
-  # Separate queries for natural water and waterway features
+  # Different keys in OSM capture different types of water bodies, both are needed to be comprehensive
   query_natural <- osmdata::opq(bbox = bbox) |>
     osmdata::add_osm_feature(key = "natural", value = c("water", "wetland"))
 
@@ -130,7 +148,7 @@ get_bluespaces <- function(zone) {
   result_natural <- osmdata::osmdata_sf(query_natural)
   result_waterway <- osmdata::osmdata_sf(query_waterway)
 
-  # Combine relevant layers
+  # Merge polygon and line geometries so both still water and flowing water are included
   polys <- dplyr::bind_rows(
     result_natural$osm_polygons,
     result_waterway$osm_polygons
@@ -140,6 +158,7 @@ get_bluespaces <- function(zone) {
     result_waterway$osm_lines
   )
 
+  # Limit result to features that actually overlap the travel zone
   safe_filter <- function(x) {
     x <- clean_geometry(x)
     if (sf::st_crs(x) != sf::st_crs(zone)) {
@@ -174,13 +193,20 @@ get_bluespaces <- function(zone) {
 #'
 #' @param zone An `sf` polygon from `travel_zone()`
 #' @return An `sf` object of road lines or NULL if none found
+#' @examples
+#' \dontrun{
+#' location <- geocode_address("Kiliansplatz, Wuerzburg")
+#' zone <- travel_zone(location, 5)
+#' roads <- get_roads(zone)
+#' }
 #' @export
 get_roads <- function(zone) {
   if (!requireNamespace("osmdata", quietly = TRUE)) stop("Package 'osmdata' is required.")
 
-  # Use bounding box of the zone for the query
+  # Limit OSM query to zone extent to avoid fetching unnecessary road data
   bbox <- sf::st_bbox(zone)
 
+  # Fetches all types of roads/highways defined in OSM and provides network context for routing and visuals
   query <- osmdata::opq(bbox = bbox) |>
     osmdata::add_osm_feature(key = "highway")
 
@@ -188,14 +214,15 @@ get_roads <- function(zone) {
   roads <- result$osm_lines
 
   if (!is.null(roads) && nrow(roads) > 0) {
+    # Ensure roads are spatially valid to prevent rendering or analysis errors
     roads <- clean_geometry(roads)
 
-    # Ensure CRS match
+    # Coordinate systems must match for spatial filtering to work
     if (sf::st_crs(roads) != sf::st_crs(zone)) {
       zone <- sf::st_transform(zone, sf::st_crs(roads))
     }
 
-    # Clip to zone
+    # Only keep road segments that actually intersect the travel zone
     roads <- sf::st_filter(roads, zone, .predicate = sf::st_intersects)
     message("Road features returned: ", nrow(roads))
     return(roads)

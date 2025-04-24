@@ -18,5 +18,5 @@ A tibble with lat and lon columns.
 This function wraps a user-input pair of latitude and longitude into a named tibble.
 }
 \examples{
-geocode_coords(49.7873, 9.9786)
+location <- geocode_coords(49.793, 9.932)
 }

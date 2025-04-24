@@ -43,6 +43,24 @@ palette_colors <- list(
 #' @importFrom ggspatial annotation_scale annotation_north_arrow north_arrow_fancy_orienteering
 #'
 #' @return A ggplot object showing the map with specified features.
+#' @examples
+#' location <- geocode_address("Kiliansplatz, Wuerzburg")
+#' zone <- travel_zone(location, 5)
+#' \dontrun{
+#' result <- navigate_to_target(location, zone, greens, blues)
+#' plot_travel_map_gg(
+#'   zone = zone,
+#'   greens = greens,
+#'   blues = blues,
+#'   roads = roads,
+#'   route = result$route,
+#'   route_distance = result$length_m,
+#'   start_location = location,
+#'   target_type = "green"
+#' )
+#' }
+#'
+#'
 #' @export
 plot_travel_map_gg <- function(
     zone,
@@ -172,10 +190,6 @@ plot_travel_map_gg <- function(
       ggspatial::annotation_north_arrow(location = "tr", which_north = "true",
                                         style = ggspatial::north_arrow_fancy_orienteering)
   }
-
-  # Enabling lat/lon grid on outer edge of map for spatial reference
-  # this messes up and is very janky, try to fix in future
-  #p <- p + ggplot2::coord_sf(datum = NA)
 
   return(p)
 }

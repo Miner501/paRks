@@ -6,7 +6,7 @@
 #'
 #' @return A tibble with latitude and longitude columns.
 #' @examples
-#' geocode_address("John-Skilton-Straße 4a, 97074 Würzburg")
+#' location <- geocode_address("Kiliansplatz, Wuerzburg")
 #' @export
 geocode_address <- function(address) {
   if (!requireNamespace("tidygeocoder", quietly = TRUE)) {
@@ -30,7 +30,7 @@ geocode_address <- function(address) {
 #' @param lon Longitude
 #' @return A tibble with lat and lon columns.
 #' @examples
-#' geocode_coords(49.7873, 9.9786)
+#' location <- geocode_coords(49.793, 9.932)
 #' @export
 geocode_coords <- function(lat, lon){
   if (!requireNamespace("tibble", quietly = TRUE)) {

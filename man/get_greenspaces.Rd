@@ -19,3 +19,11 @@ An \code{sf} object of green polygons intersecting the zone
 \description{
 Returns parks, gardens, forests, meadows, and other green spaces within the travel zone.
 }
+\examples{
+\dontrun{
+location <- geocode_address("Kiliansplatz, Wuerzburg")
+zone <- travel_zone(location, 5)
+greens <- get_greenspaces(zone, mode = "standard")
+}
+
+}

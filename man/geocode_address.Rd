@@ -16,5 +16,5 @@ A tibble with latitude and longitude columns.
 This function takes a street address and returns latitude and longitude using the Nominatim API.
 }
 \examples{
-geocode_address("John-Skilton-Straße 4a, 97074 Würzburg")
+location <- geocode_address("Kiliansplatz, Wuerzburg")
 }

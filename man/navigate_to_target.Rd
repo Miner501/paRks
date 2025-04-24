@@ -37,3 +37,12 @@ A list with two elements:
 Prioritizes either the closest or largest destination within a given travel zone,
 calculates the route to it, and returns both the route and its travel distance.
 }
+\examples{
+location <- geocode_address("Kiliansplatz, Wuerzburg")
+zone <- travel_zone(location, 5)
+\dontrun{
+# assuming you have loaded `greens` and `blues` as sf objects
+result <- navigate_to_target(location, zone, greens, blues, target_type = "green", preference = "closest")
+}
+
+}

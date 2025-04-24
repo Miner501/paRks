@@ -15,6 +15,14 @@
 #'   \item{route}{An `sf` LINESTRING object representing the road network route}
 #'   \item{length_m}{A numeric value giving the route length in meters}
 #' }
+#' @examples
+#' location <- geocode_address("Kiliansplatz, Wuerzburg")
+#' zone <- travel_zone(location, 5)
+#' \dontrun{
+#' # assuming you have loaded `greens` and `blues` as sf objects
+#' result <- navigate_to_target(location, zone, greens, blues, target_type = "green", preference = "closest")
+#' }
+#'
 #' @export
 navigate_to_target <- function(location, zone, greens, blues, target_type = "green", preference = "closest") {
   if (!requireNamespace("osrm", quietly = TRUE)) stop("Package 'osrm' is required.")
@@ -80,13 +88,21 @@ navigate_to_target <- function(location, zone, greens, blues, target_type = "gre
 #' @param route An sf LINESTRING object representing a route, from "navigate_to_target()"
 #'
 #' @return The length of the route in a numeric unit (meters)
+#' @examples
+#' location <- geocode_address("Kiliansplatz, Wuerzburg")
+#' zone <- travel_zone(location, 5)
+#' \dontrun{
+#' result <- navigate_to_target(location, zone, greens, blues)
+#' route_length(result$route)
+#' }
+#'
 #' @export
 route_length <- function(route){
-  #Reprojection of CRS in case still using degrees/mins
+  # Reprojection of CRS in case still using degrees/mins
   reprojected_route <- sf::st_transform(route, 3857)
 
   length_m <- sf::st_length(reprojected_route)
 
-  #Saving as.numeric to use for labelling/plotting
+  # Saving as.numeric to use for labelling/plotting
   return(as.numeric(length_m))
 }

@@ -15,3 +15,12 @@ The length of the route in a numeric unit (meters)
 \description{
 Calculate and save the length of a route
 }
+\examples{
+location <- geocode_address("Kiliansplatz, Wuerzburg")
+zone <- travel_zone(location, 5)
+\dontrun{
+result <- navigate_to_target(location, zone, greens, blues)
+route_length(result$route)
+}
+
+}

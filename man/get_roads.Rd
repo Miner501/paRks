@@ -15,3 +15,10 @@ An \code{sf} object of road lines or NULL if none found
 \description{
 Returns roads (highways) that intersect a travel zone.
 }
+\examples{
+\dontrun{
+location <- geocode_address("Kiliansplatz, Wuerzburg")
+zone <- travel_zone(location, 5)
+roads <- get_roads(zone)
+}
+}

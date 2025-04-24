@@ -33,7 +33,7 @@ install_github("Miner501/paRks")
 | get_bluespaces(zone) | Retrieves water-related features (like rivers, lakes, and wetlands) from OpenStreetMap within a travel zone. |
 | get_roads(zone) | Fetches road network features that intersect with a specified travel zone from OpenStreetMap. |
 | navigate_to_target(location, zone, greens, blues, target_type, preference) | Selects the best green or blue space based on user preference (closest or largest) and computes a route to it using OSRM. |
-| plot_travel_map_gg(…) | Uses `ggplot2` and `sf` to create a detailed map showing green/blue spaces, roads, a travel zone, and a route from a starting point. |
+| plot_travel_map_gg(zone, greens, blues, roads, route, route_distance, start_location, target_type, palette, title) | Uses `ggplot2` and `sf` to create a detailed map showing green/blue spaces, roads, a travel zone, and a route from a starting point. |
 
 ## Example
 
@@ -58,19 +58,19 @@ zone <- travel_zone(location, distance_km = 5)
 ```
 
 Once the zone has been calculated based on OSM routing information you
-must fetch the blue and green spaces of within the zone as well as the
-road network. The road network is useful to make the final map more
-visually pleasing.
+must fetch the blue and green spaces within the zone as well as the road
+network. The road network is useful to make the final map more visually
+pleasing.
 
 ``` r
-greens <- get_greenspaces(zone, mode = "standard") # mode can also be set to "broad" to include any type of green space, even ones that may not be publicly accessible. You can also set the minimum size by using min_area_hea = 2 etc..
+greens <- get_greenspaces(zone, mode = "standard") # mode can also be set to "broad" to include any type of green space, even ones that may not be publicly accessible. You can also set the minimum size by using min_area_ha = 2 etc..
 #> Green features returned: 157
 
 blues  <- get_bluespaces(zone)
 #> Blue features returned: 69
 
 roads  <- get_roads(zone)
-#> Road features returned: 6183
+#> Road features returned: 6193
 ```
 
 At this point you can now start navigating. You can select if you would
@@ -100,7 +100,7 @@ plot_travel_map_gg(
   route_distance = result$length_m,
   start_location = location,
   target_type = "green",  # or "blue"
-  palette = "normal", #this is where you can select if you have any form of colorblindness mentioned earlier in the Readme
+  palette = "normal", # this is where you can select if you have any form of colorblindness mentioned earlier in the Readme
   title = "Example Map of paRks"
 )
 #> Warning: attribute variables are assumed to be spatially constant throughout
@@ -116,16 +116,15 @@ plot_travel_map_gg(
 ## Limitations
 
 The way the OSRM package is structured only allows for car based
-routing. This means that the route it suggests you to take, may not be
-the shortest or most realistic one. Additionally, because OSM is a
-community project, there are some small issues in the road-network. This
-may cause there to be “islands” within the zone that are shown as being
-inaccessible, even though in actuality they are perfectly accessible. An
-example of this is shown in the plot above, where one of these “islands
-of inaccessibility” is located just north of the large blue space.
-Additionally OSRM struggles with routing for very short distances,
-causing the travel zone calculation to become buggy, if the distance to
-be calculated is less than 2 km. These are known bugs, for which there
-is currently no available simple fix. In the future it may be possible
-to create an own API for OSM-based routing that includes walking, or
-cycling.
+routing. This means that the route it suggests may not be the shortest
+or most realistic one. Additionally, because OSM is a community project,
+there are some small issues in the road-network. This may cause there to
+be “islands” within the zone that are shown as being inaccessible, even
+though in actuality they are perfectly accessible. An example of this is
+shown in the plot above, where one of these “islands of inaccessibility”
+is located just north of the large blue space. Additionally OSRM
+struggles with routing for very short distances, causing the travel zone
+calculation to become buggy, if the distance to be calculated is less
+than 2 km. These are known bugs, for which there is currently no
+available simple fix. In the future it may be possible to create a
+custom API for OSM-based routing that includes walking, or cycling.
