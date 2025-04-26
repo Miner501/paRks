@@ -88,7 +88,9 @@ result <- navigate_to_target(
 )
 ```
 
-Finally you can plot your results on a map.
+Finally you can plot your results on a map. If your travel zone does not
+have any blue or green spaces, you can set the plotting variables to
+NULL. For example “blues = NULL,”.
 
 ``` r
 plot_travel_map_gg(
